@@ -1,4 +1,4 @@
-# Quiz Focus Monitor
+# tab-focus-demo
 
 ## Implementation Guide
 
