@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus / Tab Switch Demo</title>
+
+<style>
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #111;
+        color: white;
+        font-family: system-ui, sans-serif;
+    }
+
+    .panel {
+        width: min(700px, 90vw);
+        padding: 30px;
+        border: 1px solid #444;
+        border-radius: 16px;
+        background: #1b1b1b;
+    }
+
+    h1 {
+        margin-top: 0;
+    }
+
+    .status {
+        padding: 20px;
+        border-radius: 12px;
+        background: #222;
+        font-size: 24px;
+        margin: 20px 0;
+    }
+
+    .away {
+        background: #4a1717;
+    }
+
+    .active {
+        background: #174a25;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .item {
+        padding: 12px;
+        background: #252525;
+        border-radius: 8px;
+    }
+
+    .value {
+        font-family: monospace;
+        font-size: 18px;
+    }
+
+    #log {
+        margin-top: 20px;
+        height: 180px;
+        overflow: auto;
+        background: #080808;
+        padding: 12px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 13px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="panel">
+    <h1>Browser Focus Detector</h1>
+
+    <div id="status" class="status active">
+        🟢 PAGE ACTIVE
+    </div>
+
+    <div class="grid">
+        <div class="item">
+            document.hidden
+            <div class="value" id="hidden">false</div>
+        </div>
+
+        <div class="item">
+            document.hasFocus()
+            <div class="value" id="focus">true</div>
+        </div>
+
+        <div class="item">
+            Window state
+            <div class="value" id="windowState">focused</div>
+        </div>
+
+        <div class="item">
+            Fullscreen
+            <div class="value" id="fullscreen">false</div>
+        </div>
+    </div>
+
+    <div id="log"></div>
+</div>
+
+<script>
+const status = document.getElementById("status");
+const hiddenEl = document.getElementById("hidden");
+const focusEl = document.getElementById("focus");
+const windowStateEl = document.getElementById("windowState");
+const fullscreenEl = document.getElementById("fullscreen");
+const log = document.getElementById("log");
+
+function timestamp() {
+    return new Date().toLocaleTimeString();
+}
+
+function addLog(message) {
+    const line = document.createElement("div");
+    line.textContent = `[${timestamp()}] ${message}`;
+
+    log.prepend(line);
+}
+
+function update() {
+    const hidden = document.hidden;
+    const focused = document.hasFocus();
+
+    hiddenEl.textContent = hidden;
+    focusEl.textContent = focused;
+
+    if (hidden || !focused) {
+        status.textContent = "🔴 PAGE AWAY / UNFOCUSED";
+        status.className = "status away";
+    } else {
+        status.textContent = "🟢 PAGE ACTIVE";
+        status.className = "status active";
+    }
+
+    fullscreenEl.textContent =
+        document.fullscreenElement !== null;
+}
+
+/*
+    TAB SWITCH / PAGE VISIBILITY
+*/
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        addLog("PAGE HIDDEN — possible tab/app switch");
+    } else {
+        addLog("PAGE VISIBLE — returned");
+    }
+
+    update();
+});
+
+/*
+    WINDOW FOCUS
+*/
+window.addEventListener("blur", () => {
+    addLog("WINDOW BLUR — lost focus");
+    update();
+});
+
+window.addEventListener("focus", () => {
+    addLog("WINDOW FOCUS — regained focus");
+    update();
+});
+
+/*
+    FULLSCREEN CHANGES
+*/
+document.addEventListener("fullscreenchange", () => {
+    const active = document.fullscreenElement !== null;
+
+    addLog(
+        active
+            ? "Entered fullscreen"
+            : "Exited fullscreen"
+    );
+
+    update();
+});
+
+/*
+    Periodically check the state too.
+    This isn't necessary for basic detection,
+    but makes the demo visibly update.
+*/
+setInterval(update, 250);
+
+addLog("Detector started");
+update();
+</script>
+
+</body>
+</html>
